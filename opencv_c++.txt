@@ -1,1 +1,5 @@
+Instalação do OpenCV na rasp:
+https://www.newtoncbraga.com.br/index.php/microcontroladores/143-tecnologia/17799-opencv-o-que-e-onde-usar-e-como-instalar-na-raspberry-pi-mic412.html
+
+Repo do script de reconhecimento:
 https://github.com/Macrosrider/rpi_face_recognition_cpp/blob/master/train.cpp
