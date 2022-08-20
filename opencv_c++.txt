@@ -3,3 +3,6 @@ https://www.newtoncbraga.com.br/index.php/microcontroladores/143-tecnologia/1779
 
 Repo do script de reconhecimento:
 https://github.com/Macrosrider/rpi_face_recognition_cpp/blob/master/train.cpp
+
+Open cv configuracao da pasta de destino:
+https://github.com/cggos/ccv/issues/1
