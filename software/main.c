@@ -17,7 +17,6 @@ Envio de informação por sms
 #include <time.h>
 #include <pigpio.h>
 #include <wiringPi.h>
-
 //===============Variaveis
 #define BAUDRATE 9600
 #define bits 8
@@ -96,7 +95,6 @@ int envioSms(void){ //envio do sms com as info de geolocalizacao
     float flatt, flongg;
     //char *number = "5561982185657"; //Amanda
     char *number = "5561995553032"; //Dantas
-    //char *number = "5561996654391"; //teste
     
     printf("Iniciando GPS...\n\n");
     while(valiData == 0){
@@ -201,6 +199,7 @@ int main(){
             //Func para reconheciemento facial
             //Verifica se a presença é de um invasor
             if (invasor == 1){
+
                 envioSms();
                 sleep(5);
 
