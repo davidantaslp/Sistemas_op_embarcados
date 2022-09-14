@@ -153,8 +153,9 @@ int envioSms(void){ //envio do sms com as info de geolocalizacao
         sleep(1);
         char* result = strstr(buffer,gpgll);
         printf("Verificando se a leitura foi correta.\n");
+        //valiData = 1;
         if(result != NULL){
-            printf("Dados válidos, enviando SMS\n");
+            printf("Dados válidos\n");
             // printf("Achei:%.50s\n",result);
             i = parse_comma_delimited_str(result, field, 20);
             debug_print_fields(i,field); //Valores raw, precisa converter as coordenadas
@@ -197,29 +198,31 @@ int envioSms(void){ //envio do sms com as info de geolocalizacao
             flongg = atof(longg) + (atof(minutos)/60) + ((atof(segundos)*60)/3600);
             printf("Latitude em graus:%.6f\n", flatt);
             printf("Longitute em graus:%f\n", flongg);
+            printf("Aguardando GPS Sync...\n");
+            //Verifica se os valores não são nulos para enviar o SMS
+            if(flatt > 0 && flongg > 0){
+                printf("GPS Sincronizado!\tEnviando SMS...\n");
+                if(wiringPiSetup() < 0)return 1;
+                if((fd = serialOpen("/dev/ttyS0",9600)) < 0)return 1;
+                //Envio do sms
+                serialPrintf(fd,"AT+CMGF=1\r\n"); //set text mode
+                sleep(1);
+                serialPrintf(fd, "AT+CMGS=\"+%s\"\r\n",number); //send SMS to number
+                sleep(1);
 
-            
-            if(wiringPiSetup() < 0)return 1;
-            if((fd = serialOpen("/dev/ttyS0",9600)) < 0)return 1;
-            //Envio do sms
-            printf("Enviando sms...\n\n");
-            serialPrintf(fd,"AT+CMGF=1\r\n"); //set text mode
-            sleep(1);
-            serialPrintf(fd, "AT+CMGS=\"+%s\"\r\n",number); //send SMS to number
-            sleep(1);
-
-            serialPrintf(fd,"%c", 13); //send carriage return
-            serialPrintf(fd, "https://maps.google.com/?q=-%.7f,-%.7f\r\n",flatt, flongg); //send message
-            printf("https://maps.google.com/?q=-%.7f,-%.7f\r\n",flatt, flongg);
-            serialPrintf(fd, "%c", 26);// fim da mensagem ****
-            while(serialDataAvail(fd)>0){ //Recebe msg
-                printf ("%c", serialGetchar (fd));
-                //fflush (stdout) ;
-            }
-            sleep(1);
-            serialClose(fd);
-            return 0;
-            valiData = 1; 
+                serialPrintf(fd,"%c", 13); //send carriage return
+                serialPrintf(fd, "https://maps.google.com/?q=-%.7f,-%.7f\r\n",flatt, flongg); //send message
+                printf("https://maps.google.com/?q=-%.7f,-%.7f\r\n",flatt, flongg);
+                serialPrintf(fd, "%c", 26);// fim da mensagem ****
+                while(serialDataAvail(fd)>0){ //Recebe msg
+                    printf ("%c", serialGetchar (fd));
+                    //fflush (stdout) ;
+                }
+                sleep(1);
+                serialClose(fd);
+                return 0;
+                valiData = 1;
+            } 
         }
     }
     return 0;
@@ -234,87 +237,92 @@ int main(){
     //pinMode(sensorPIR, INPUT);
     printf("Iniciando sistema de segurança...\n");
 
-  int sensorPIR = 1;
-  //VideoCapture cap(0);
-  //Camera = cap(0);
-  VideoCapture Camera; // open the default camera
-  //Camera.open(0);
-  //raspicam::RaspiCam_Cv Camera;
+    int sensorPIR = 1;
+    //VideoCapture cap(0);
+    //Camera = cap(0);
+    VideoCapture Camera; // open the default camera
+    //Camera.open(0);
+    //raspicam::RaspiCam_Cv Camera;
 
-  // Camera.set(CAP_PROP_FRAME_WIDTH, 320);
-  // Camera.set(CAP_PROP_FRAME_HEIGHT, 240);
+    // Camera.set(CAP_PROP_FRAME_WIDTH, 320);
+    // Camera.set(CAP_PROP_FRAME_HEIGHT, 240);
 
-  //Camera.set( CV_CAP_PROP_FORMAT, CV_8UC1 );
+    //Camera.set( CV_CAP_PROP_FORMAT, CV_8UC1 );
 
-  map<int, string> labels;
+    map<int, string> labels;
 
-  ifstream infile("./recognizer/labels.txt");
+    ifstream infile("./recognizer/labels.txt");
 
-  int a;
-  int unknowTrue=0;
-  string b;
-  while (infile >> a >> b){
-    labels[a] = b;
-  }
-
-  if (!Camera.open(0)) {cerr<<"Error opening the camera"<<endl;return -1;}
-
-  CascadeClassifier classifier;
-  classifier.load("./cascades/lbpcascade_frontalface.xml");
-
-  Ptr<LBPHFaceRecognizer> recognizer =  LBPHFaceRecognizer::create(2, 2, 7, 7, 17);
-  recognizer->read("./recognizer/embeddings.xml");
-
-  Mat windowFrame;
-  namedWindow("edges", 1);
-  int numframes = 0;
-  time_t timer_begin,timer_end;
-  time ( &timer_begin );
-
-  for(;;){
-    // leitura do sensor de prensença
-    if(sensorPIR == 0){
-      continue;
+    int a;
+    int unknowTrue=0;
+    string b;
+    while (infile >> a >> b){
+        labels[a] = b;
     }
-    Mat frame;
-    Camera.grab();
-    Camera.retrieve(frame);
-    cvtColor(frame, windowFrame, cv::COLOR_RGB2GRAY); // convert to grayscale
-    vector<Rect> faces;
-    classifier.detectMultiScale(frame, faces, 1.2, 3); //parametros de deteccao: imagem, vetor de faces, escala, vizinhos
-    for(size_t i = 0; i < faces.size(); i++){
-      rectangle(frame, faces[i], Scalar(0, 255, 0));
-      Mat face = windowFrame(faces[i]);
-      double confidence = 0.0;
-      int predicted = recognizer->predict(face); //armazena a variavel de predicao
-      recognizer->predict(face, predicted, confidence);
-      if(labels.find(predicted) == labels.end() || confidence > 25){ // Verifica se o rosto foi reconhecido
-        putText(frame, "Unknown", Point(faces[i].x ,faces[i].y - 5), FONT_HERSHEY_DUPLEX, 1, Scalar(0,255,0), 1);
-        //Invasor identificado
-        //Envio do sms com dados do GPS;
-        unknowTrue++;
-      }else{
-        putText(frame, labels[predicted], Point(faces[i].x ,faces[i].y - 5), FONT_HERSHEY_DUPLEX, 1, Scalar(0,255,0), 1);
-        unknowTrue--;
-        if(unknowTrue <= 0){
+
+    if (!Camera.open(0)) {cerr<<"Error opening the camera"<<endl;return -1;}
+
+    CascadeClassifier classifier;
+    classifier.load("./cascades/lbpcascade_frontalface.xml");
+
+    Ptr<LBPHFaceRecognizer> recognizer =  LBPHFaceRecognizer::create(2, 2, 7, 7, 17);
+    recognizer->read("./recognizer/embeddings.xml");
+
+    Mat windowFrame;
+    namedWindow("edges", 1);
+    int numframes = 0;
+    time_t timer_begin,timer_end;
+    time ( &timer_begin );
+
+    for(;;){
+        // leitura do sensor de prensença
+        if(sensorPIR == 0){
+        continue;
+        }
+        Mat frame;
+        Camera.grab();
+        Camera.retrieve(frame);
+        cvtColor(frame, windowFrame, cv::COLOR_RGB2GRAY); // convert to grayscale
+        vector<Rect> faces;
+        classifier.detectMultiScale(frame, faces, 1.2, 3); //parametros de deteccao: imagem, vetor de faces, escala, vizinhos
+        for(size_t i = 0; i < faces.size(); i++){
+        rectangle(frame, faces[i], Scalar(0, 255, 0));
+        Mat face = windowFrame(faces[i]);
+        double confidence = 0.0;
+        int predicted = recognizer->predict(face); //armazena a variavel de predicao
+        recognizer->predict(face, predicted, confidence);
+        if(labels.find(predicted) == labels.end() || confidence > 18){ // Verifica se o rosto foi reconhecido
+            putText(frame, "Unknown", Point(faces[i].x ,faces[i].y - 5), FONT_HERSHEY_DUPLEX, 1, Scalar(0,255,0), 1);
+            //Invasor identificado
+            //Envio do sms com dados do GPS;
+            unknowTrue++;
+        }else{
+            putText(frame, labels[predicted], Point(faces[i].x ,faces[i].y - 5), FONT_HERSHEY_DUPLEX, 1, Scalar(0,255,0), 1);
+            unknowTrue--;
+            if(unknowTrue <= 0){
+                unknowTrue = 0;
+            }
+        }
+        cout << "ID: " << predicted << " | Confidence: " << confidence << endl;
+        }
+        //envio
+        if(unknowTrue>= 30){ //Verifica se teve 30 frames com invasor e envia o sms
+            envioSms();
+            printf("Aguardando 60 segundos...\n");
+            for(int i = 60; i != 0; i--){
+                printf("Verificando novamente em: %d segundos.\n",i);
+                sleep(1);
+            }
             unknowTrue = 0;
         }
-      }
-      cout << "ID: " << predicted << " | Confidence: " << confidence << endl;
-    }
-    //envio
-    if(unknowTrue>= 30){ //Verifica se teve 30 frames com invasor e envia o sms
-        envioSms();
-        unknowTrue = 0;
-    }
-    imshow("edges", frame);
-    numframes++;
+        //imshow("edges", frame); //exibe os frames da câmera
+        numframes++;
 
-    if(waitKey(30) >=0) break;
-  }
-  Camera.release();
-  time ( &timer_end );
-  double secondsElapsed = difftime ( timer_end,timer_begin );
-  cout << "FPS:" << numframes / secondsElapsed << endl;
-  return 0;
+        if(waitKey(30) >=0) break;
+    }
+    Camera.release();
+    time ( &timer_end );
+    double secondsElapsed = difftime ( timer_end,timer_begin );
+    cout << "FPS:" << numframes / secondsElapsed << endl;
+    return 0;
 }
