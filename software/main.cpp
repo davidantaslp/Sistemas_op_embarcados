@@ -34,7 +34,8 @@ Envio de informação por sms
 // Defines
 #define BAUDRATE 9600
 #define bits 8
-//define sensorPIR 0
+#define ledAct 4
+//define sensorPIR 5
 
 using namespace cv;
 using namespace cv::face;
@@ -235,6 +236,10 @@ int main(){
 
     wiringPiSetup();
     //pinMode(sensorPIR, INPUT);
+    pinMode(ledAct, OUTPUT);
+    digitalWrite(ledAct, HIGH);
+    sleep(0.1);
+    digitalWrite(ledAct, LOW);
     printf("Iniciando sistema de segurança...\n");
 
     int sensorPIR = 1;
@@ -275,12 +280,14 @@ int main(){
     time ( &timer_begin );
 
     for(;;){
+        digitalWrite(ledAct, LOW);
         // leitura do sensor de prensença
         if(sensorPIR == 0){
         continue;
         }
         Mat frame;
         Camera.grab();
+        digitalWrite(ledAct, HIGH);
         Camera.retrieve(frame);
         cvtColor(frame, windowFrame, cv::COLOR_RGB2GRAY); // convert to grayscale
         vector<Rect> faces;
@@ -294,19 +301,22 @@ int main(){
         if(labels.find(predicted) == labels.end() || confidence > 18){ // Verifica se o rosto foi reconhecido
             putText(frame, "Unknown", Point(faces[i].x ,faces[i].y - 5), FONT_HERSHEY_DUPLEX, 1, Scalar(0,255,0), 1);
             //Invasor identificado
-            //Envio do sms com dados do GPS;
             unknowTrue++;
+            digitalWrite(ledAct, LOW);
         }else{
             putText(frame, labels[predicted], Point(faces[i].x ,faces[i].y - 5), FONT_HERSHEY_DUPLEX, 1, Scalar(0,255,0), 1);
             unknowTrue--;
+            digitalWrite(ledAct, LOW);
             if(unknowTrue <= 0){
                 unknowTrue = 0;
             }
         }
+        digitalWrite(ledAct, LOW);
         cout << "ID: " << predicted << " | Confidence: " << confidence << endl;
         }
         //envio
         if(unknowTrue>= 30){ //Verifica se teve 30 frames com invasor e envia o sms
+            digitalWrite(ledAct, HIGH);
             envioSms();
             printf("Aguardando 60 segundos...\n");
             for(int i = 60; i != 0; i--){
