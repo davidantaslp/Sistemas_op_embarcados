@@ -157,8 +157,7 @@ int envioSms(void)
     char minutos[2];
     char segundos[6];
     float flatt, flongg;
-    // char *number = "5561982185657"; //Amanda
-    char *number = "5561995553032"; // Dantas
+    char *number = "5561912345678";
 
     printf("Iniciando GPS...\n\n");
     while (valiData == 0)
