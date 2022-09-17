@@ -30,8 +30,7 @@ int sendSMS(char dataSend){ //envia sms
     int fd;
     if(wiringPiSetup() < 0)return 1;
     if((fd = serialOpen("/dev/ttyS0",9600)) < 0)return 1;
-    //char *number = "5561982185657";
-    char *number = "5561996654391"; //teste
+    char *number = "556192345678"; //teste
     // serialPrintf(fd, "AT+CSQ\r\n"); //check signal quality
     // sleep(1);  
     // serialPrintf(fd, "AT+CREG?\r\n"); //check network registration
