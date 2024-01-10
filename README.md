@@ -20,10 +20,7 @@ O SRSV é um sistema de segurança veicular, que utiliza tecnologia de reconheci
 Ativação por sensor de presença, seguida de reconhecimento facial. Em caso de intrusão, envia localização GPS para o proprietário.
 
 ## Instalação
-Veja a documentação para detalhes de instalação e configuração.
-
-## Contribuições
-Contribuições são bem-vindas. Veja o guia de contribuição.
+Veja a documentação para detalhes de instalação e configuração. Em especial o .txt contém link de instruções para configurações chaves do projeto.
 
 ## Licença
 Distribuído sob a licença MIT. Veja o arquivo LICENSE para mais detalhes.
