@@ -22,15 +22,14 @@ Envio de informação por sms
 #define bits 8
 #define sensorPIR 0
 
-//https://maps.google.com/?q=<lat>,<lng> 
-//https://www.google.com.br/maps/@-15.9896165,-48.0456596,16z
+//https://maps.google.com/?q=<lat>,<lng>
 //===============Funcs
 int sendSMS(char dataSend){ //envia sms
     printf("Enviando sms...\n\n");
     int fd;
     if(wiringPiSetup() < 0)return 1;
     if((fd = serialOpen("/dev/ttyS0",9600)) < 0)return 1;
-    char *number = "556192345678"; //teste
+    char *number = "559999999999"; //teste
     // serialPrintf(fd, "AT+CSQ\r\n"); //check signal quality
     // sleep(1);  
     // serialPrintf(fd, "AT+CREG?\r\n"); //check network registration
