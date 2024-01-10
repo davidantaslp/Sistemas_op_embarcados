@@ -1,7 +1,4 @@
-# Sistemas Operacionais Embarcados
-# Sistema Remoto de Segurança para Veículos utilizando Reconhecimento Facial
-
-# Sistema Remoto de Segurança para Veículos (SRSV)
+# Sistema Remoto de Segurança para Veículos (SRSV) utilizando Reconhecimento Facial
 
 ## Visão Geral
 O SRSV é um sistema de segurança veicular, que utiliza tecnologia de reconhecimento facial e rastreamento para aumentar a proteção dos veículos.
